@@ -1,35 +1,6 @@
 require './input_functions'
-require 'colorize'
-# require './colors'
-
-module Genre
-    POP, CLASSIC, JAZZ, ROCK = *1..4
-end
-
-$genre_names = ["Null", "Pop", "Classic", "Jazz", "Rock"]
-$album_file = 'albums.txt'
-
-# CLASS DEFINE
-class Album 
-    attr_accessor :id, :count, :title, :artist, :cover, :genre , :tracks
-    def initialize(id, count, title, artist, cover, genre, tracks)
-        @id = id
-        @count = count
-        @title = title 
-        @artist = artist
-        @cover = cover
-        @genre = genre
-        @tracks = tracks
-    end
-end
-
-class Track
-    attr_accessor :name, :location
-    def initialize(name, location)
-        @location = location
-        @name = name 
-    end
-end
+require_relative 'colors'
+require 'vlc-client' #https://github.com/mguinada/vlc-client
 
 # 1 ALBUM READING
 def read_track(music_file)
@@ -41,7 +12,7 @@ end
 def read_tracks(music_file)
     i = 0
     tracks = Array.new()
-    @count = music_file.gets().to_i()
+    count = music_file.gets().to_i()
     while (i < count)
         track = read_track(music_file)
         tracks << track
@@ -53,7 +24,7 @@ end
 def read_album_file()
     finished = false
     begin
-    music_file = File.new($album_file, "r")
+    music_file = File.new($album_file_name, "r")
         if music_file
             albums = read_albums(music_file)
             music_file.close()
@@ -69,15 +40,14 @@ end
 def read_album(music_file)
     i = 0
     album_id = i + 1
-    album_artist = music_file.gets().to_i
     album_artist = music_file.gets()
     album_title = music_file.gets()
-    album_cover = music_file.gets()
+    album_artwork = music_file.gets()
     album_genre = music_file.gets().to_i()
     tracks = read_tracks(music_file)
-    album = Album.new(album_id, album_count, album_title,album_artist,album_cover, album_genre,tracks)
+    album = Album.new(album_id, album_title,album_artist,album_artwork, album_genre,tracks)
     return album
-end
+  end
 
 def read_albums music_file
 	count = music_file.gets().to_i
@@ -95,7 +65,7 @@ def print_album(album)
     puts ("Album artist : #{album.artist}")
     puts ("Album title : #{album.title}")
     puts('Genre ' + album.genre.to_s)
-    puts($genre_names[album.genre])
+    puts(GENRE_NAMES[album.genre])
     print_tracks(album.tracks)
 end
 
@@ -123,40 +93,40 @@ def print_track(track)
   print("Track Location: #{track.location}".red)
 end
 
-# # 2 DISPLAY ALBUMS
-# def display_albums(albums)
-#     finished = false
-#     begin
-#         puts("Display Album".bg_blue)
-#         puts("1 - Display All Album".bg_brown)
-#         puts("2 - Display by Genre".bg_brown)
-#         puts("3 - Return to Main Menu".bg_brown)
-#         option = read_integer_in_range("Enter Choice: ", 1,3)
-#         case option
-#         when 1
-#             print_albums(albums)
-#         when 2
-#             print_albums_by_genre(albums)
-#         when 3
-#             puts("Returning to Main Menu..".bg_red)
-#             finished = true
-#         end
-#     end until finished
-# end
+# 2 DISPLAY ALBUMS
+def display_albums(albums)
+    finished = false
+    begin
+        puts("Display Album".bg_blue)
+        puts("1 - Display All Album".bg_brown)
+        puts("2 - Display by Genre".bg_brown)
+        puts("3 - Return to Main Menu".bg_brown)
+        option = read_integer_in_range("Enter Choice: ", 1,3)
+        case option
+        when 1
+            print_albums(albums)
+        when 2
+            print_albums_by_genre(albums)
+        when 3
+            puts("Returning to Main Menu..".bg_red)
+            finished = true
+        end
+    end until finished
+end
 
-# def print_albums_by_genre(albums)
-#     puts('Select Genre'.bg_blue)
-#     puts('1 Pop, 2 Classic, 3 Jazz , 4 Rock'.green)
-#     search_genre = read_integer('Enter number: ')
-#     i = 0
-#     while i < albums.length
-#         if search_genre == albums[i].genre
-#             print_album(albums[i])
-#             return albums[i]
-#         end
-#         i += 1
-#     end
-# end
+def print_albums_by_genre(albums)
+    puts('Select Genre'.bg_blue)
+    puts('1 Pop, 2 Classic, 3 Jazz , 4 Rock'.green)
+    search_genre = read_integer('Enter number: ')
+    i = 0
+    while i < albums.length
+        if search_genre == albums[i].genre
+            print_album(albums[i])
+            return albums[i]
+        end
+        i += 1
+    end
+end
 
 def print_albums_artists(albums)
     count = albums.length
@@ -187,32 +157,32 @@ def print_albums_id(albums)
     end
 end
 
-# # 3 PLAY ALBUMS
-# def play_album(albums)
-#     finished = false
-#     album = nil
-#     begin
-#         puts 'Play Albums:'.bg_blue
-#         puts '1 - Play by ID'.bg_cyan
-#         puts '2 - Search'.bg_cyan
-#         puts '3 - Return'.bg_cyan
-#         choice = read_integer_in_range("Option: ", 1, 3)
-#         case choice
-#         when 1
-#             album = search_id(albums)
-#             print_tracks(album.tracks)
-#             play_tracks(album.tracks)
-#         when 2
-#             album = search_menu(albums)
-#             print_tracks(album.tracks)
-#             play_tracks(album.tracks)
-#         when 3
-#             finished = true
-#         else
-#             puts 'Please select again'
-#         end
-#     end until finished
-# end
+# 3 PLAY ALBUMS
+def play_album(albums)
+    finished = false
+    album = nil
+    begin
+        puts 'Play Albums:'.bg_blue
+        puts '1 - Play by ID'.bg_cyan
+        puts '2 - Search'.bg_cyan
+        puts '3 - Return'.bg_cyan
+        choice = read_integer_in_range("Option: ", 1, 3)
+        case choice
+        when 1
+            album = search_id(albums)
+            print_tracks(album.tracks)
+            play_tracks(album.tracks)
+        when 2
+            album = search_menu(albums)
+            print_tracks(album.tracks)
+            play_tracks(album.tracks)
+        when 3
+            finished = true
+        else
+            puts 'Please select again'
+        end
+    end until finished
+end
 
 def search_id(albums) #search album by id
     print_albums_id(albums)
@@ -236,62 +206,63 @@ end
 def play_tracks(tracks)
     track_id = read_integer_in_range("Enter Track ID: ",0, tracks.count-1)
     trackname = tracks[track_id].name
+    track_location = tracks[track_id].location
     puts("Playing -- #{trackname}")
-    music_logo = "\U+1D161"
-    puts(music_logo * 10)
-    sleep(2)
-    puts("-- Player Exited --".bg_blue())
+    vlc = VLC::System.new
+    vlc.add_to_playlist(track_location)
+    vlc.play
+    puts("-- Player Loaded --".bg_blue())
 end
 
-# # 3 > 2 SEARCH MENU
-# def search_menu(albums)
-#     finished = false 
-#     begin
-#         puts("1 - Search by Artist".bg_blue)
-#         puts("2 - Search by Genre".bg_blue)
-#         puts("3 - Exit".bg_blue)
-#         option = read_integer_in_range("Enter Option: ", 1, 2)
-#         case option 
-#         when 1
-#             album = search_by_artist(albums)
-#             return album
-#             finished = true
-#         when 2
-#             album = search_by_genre(albums)
-#             return album
-#             finished = true
-#         when 3
-#             puts("Exiting..".bg_blue.red)
-#             finished = true
-#         end
-#     end until finished
-# end
+# 3 > 2 SEARCH MENU
+def search_menu(albums)
+    finished = false 
+    begin
+        puts("1 - Search by Artist".bg_blue)
+        puts("2 - Search by Genre".bg_blue)
+        puts("3 - Exit".bg_blue)
+        option = read_integer_in_range("Enter Option: ", 1, 2)
+        case option 
+        when 1
+            album = search_by_artist(albums)
+            return album
+            finished = true
+        when 2
+            album = search_by_genre(albums)
+            return album
+            finished = true
+        when 3
+            puts("Exiting..".bg_blue.red)
+            finished = true
+        end
+    end until finished
+end
 
-# # 4 UPDATE ALBUM
-# def update_albums(albums)
-#     finished = false
-#     begin
-#         puts("1 - Update Title".bg_cyan)
-#         puts("2 - Update Genre".bg_cyan)
-#         puts("3 - Exit to Main Menu".bg_cyan)
-#         option = read_integer_in_range("Enter Option: ", 1, 2)
-#         case option
-#         when 1
-#             album = search_id(albums)
-#             update_title(album)
-#             puts("Press Enter")
-#             finished = gets()
-#         when 2
-#             album = search_id(albums)
-#             update_genre(album)
-#             puts("Press Enter")
-#             finished = gets()
-#         when 3
-#             puts("Exiting".bg_red)
-#             finished = true
-#         end until finished
-#     end
-# end
+# 4 UPDATE ALBUM
+def update_albums(albums)
+    finished = false
+    begin
+        puts("1 - Update Title".bg_cyan)
+        puts("2 - Update Genre".bg_cyan)
+        puts("3 - Exit to Main Menu".bg_cyan)
+        option = read_integer_in_range("Enter Option: ", 1, 2)
+        case option
+        when 1
+            album = search_id(albums)
+            update_title(album)
+            puts("Press Enter")
+            finished = gets()
+        when 2
+            album = search_id(albums)
+            update_genre(album)
+            puts("Press Enter")
+            finished = gets()
+        when 3
+            puts("Exiting".bg_red)
+            finished = true
+        end until finished
+    end
+end
 
 # Update Title
 def update_title(album)
@@ -388,6 +359,3 @@ def main_menu_albums()
 end
 
 # MAIN
-def main()
-    main_menu_albums()
-end

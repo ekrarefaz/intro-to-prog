@@ -1,7 +1,9 @@
 require 'rubygems'
 require 'gosu'
 require_relative 'input_functions'
-
+require 'optparse'
+require_relative 'album_functions'
+require "vlc-client"
 
 TOP_COLOR = Gosu::Color.new(0xFF858177)
 BOTTOM_COLOR = Gosu::Color.new(0x858177)
@@ -143,13 +145,13 @@ class MusicPlayerMain < Gosu::Window
 	def draw
     case @scene
     when :menu
-      draw_background
+      draw_background()
       draw_menu(@albums)
       draw_genre_button()
       Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
       Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
     when :player
-      draw_background
+      draw_background()
       if @current_album != 8
         draw_album(@albums[@current_album])
         draw_back_button()
@@ -158,14 +160,14 @@ class MusicPlayerMain < Gosu::Window
         draw_back_button()
         display_favorite_tracks()
       end
-      display_playing_track
-      draw_buttons
-      draw_volume_rocker
+      external_player_button()
+      display_playing_track()
+      draw_buttons()
+      draw_volume_rocker()
       Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
       Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
     when :gsort
       draw_background()
-      # draw_back_button()
       display_genre()
     end
 	end
@@ -178,6 +180,8 @@ class MusicPlayerMain < Gosu::Window
     x += 150
     i += 1
     end
+    Gosu::Font.new(30).draw(mouse_x,700,300,ZOrder::UI)
+    Gosu::Font.new(30).draw(mouse_y,700,400,ZOrder::UI)
     draw_by_genre()
   end
 
@@ -262,6 +266,32 @@ class MusicPlayerMain < Gosu::Window
           print(@albums[@current_album])
         end
 
+        #GENRE SORT SCENE CLICK EVENTS
+        if @scene == :gsort
+          if area_clicked(25,100,115,190)
+            @current_album = 0
+            @scene = :player
+          elsif area_clicked(175,100,265,190)
+            @current_album = 2
+            @scene = :player
+          elsif area_clicked(325,100,415,190)
+            @current_album = 1
+            @scene = :player
+          elsif area_clicked(475,100,555,190)
+            @current_album = 3
+            @scene = :player
+          elsif area_clicked(475,230,555,340)
+            @current_album = 4
+            @scene = :player
+          elsif area_clicked(475,360,555,465)
+            @current_album = 6
+            @scene = :player
+          elsif area_clicked(625,100,720,190)
+            @current_album = 5
+            @scene = :player
+          end
+        end
+
         #FAVORITES ALBUM CLICK EVENT
         if @scene == :menu && area_clicked(@favorites_position[0],@favorites_position[1],@favorites_position[2],@favorites_position[3])
           @scene = :player
@@ -271,6 +301,14 @@ class MusicPlayerMain < Gosu::Window
         if @scene == :menu && area_clicked(20, 525, 180, 580)
           @scene = :gsort
         end
+        #EXTERNAL PLAYER EVENT CLICK
+        if @track_playing == true && area_clicked(100,380,250,440)
+          @music.pause
+          vlc = VLC::System.new
+          vlc.add_to_playlist(@current_track_location)
+          vlc.play
+        end
+                    
         #ALBUM TRACK COUNTING
         if @current_album != 8
           @current_album_track_count = @albums[@current_album].tracks.length 
@@ -443,6 +481,11 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+  def external_player_button()
+    Gosu.draw_rect(100, 380, 150, 60, Gosu::Color::BLACK, ZOrder::UI,:default)
+    Gosu::Font.new(20).draw("Open in VLC", 120,400, ZOrder::UI)
+  end
+
   def draw_back_button()
     Gosu::Font.new(20).draw("< BACK", 50, 50, ZOrder::UI)
   end
@@ -494,4 +537,20 @@ class MusicPlayerMain < Gosu::Window
   end
 end
 
-MusicPlayerMain.new.show if __FILE__ == $0
+
+options = {}
+OptionParser.new do |parser|
+  options[:gui] = false
+  parser.on("-g", "--gui", "GUI MODE MUSIC PLAYER") do
+    options[:gui] = true
+  end
+  options[:cli] = false
+  parser.on("-c", "--cli", "CLI MODE") do
+    options[:cli] = true
+  end
+end.parse!
+if options[:gui]
+  MusicPlayerMain.new.show if __FILE__ == $0
+elsif options[:cli]
+  main_menu_albums()
+end
