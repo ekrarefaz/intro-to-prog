@@ -3,6 +3,12 @@ require 'gosu'
 require_relative 'input_functions'
 require 'optparse'
 require_relative 'album_functions'
+#Works on Linux with vlc installed 
+#For Mac an alias must set to vlc system call via terminal
+#Following commands for OSX:
+#echo "alias vlc='/Applications/VLC.app/Contents/MacOS/VLC'" >> ~/.bash_profile
+#echo "alias cvlc='/Applications/VLC.app/Contents/MacOS/VLC'" >> ~/.bash_profile
+#Windows not supported
 require "vlc-client"
 
 TOP_COLOR = Gosu::Color.new(0xFF858177)
@@ -17,7 +23,7 @@ module Genre
   POP, CLASSIC, JAZZ, ROCK, METAL = *1..5
 end
 
-$album_file_name = "album.txt"
+
 GENRE_NAMES = ['Null', 'Pop', 'Classic', 'Jazz', 'Rock', 'Metal']
 
 class ArtWork
@@ -65,17 +71,14 @@ class MusicPlayerMain < Gosu::Window
 	  self.caption = "Music Player"
     x = 20
     y = 50
-    @current_album = nil
-    @current_album_track_count = nil
-    @current_track = nil
-    @current_track_repeat = false
-    @current_track_location = nil
-    @album_count = nil
     @scene = :menu
-    @music = nil
-    @track_playing = nil
-    @favorites_list = Array.new()
-    @volume = 1.0
+    @album_count = nil
+    #reading album file
+    music_file = open('album.txt',"r")
+    @albums = read_albums(music_file) 
+    print(@albums)
+    #instance variables for album absolute album positions
+    @favorites_position = [x, y + 200, 206, 435]
     @album1_position = [x, y, 183 , 220]
     @album2_position = [x + 200, y, 377, 220]
     @album3_position = [x + 400, y, 579, 220]
@@ -83,19 +86,28 @@ class MusicPlayerMain < Gosu::Window
     @album5_position = [x + 200, y + 200, 396, 435]
     @album6_position = [x + 400, y + 200, 595, 435]
     @album7_position = [x + 600, y + 200, 790, 435]
-    @favorites_position = [x, y + 200, 206, 435]
-    music_file = open('album.txt',"r")
-    @albums = read_albums(music_file) 
-    print(@albums)
+    #array holding all the album positions
+    @albums_position = [@album1_position,@album2_position,@album3_position,@album4_position,@album5_position,@album6_position,@album7_position]
+    #instance variables for :player scene
+    @current_album = nil
+    @current_album_track_count = nil
+    @current_track = nil
+    @current_track_repeat = false
+    @current_track_location = nil
+    @music = nil
+    @track_playing = nil
+    @favorites_list = Array.new()
+    @volume = 1.0
 	end
 
   # 1 ALBUM READING
+  #read a single track
   def read_track(music_file)
     name = music_file.gets()
     location = music_file.gets()
     return Track.new(name,location)
   end
-
+  #store all tracks in array
   def read_tracks(music_file)
     i = 0
     tracks = Array.new()
@@ -107,7 +119,7 @@ class MusicPlayerMain < Gosu::Window
     end
     return tracks
   end
-
+  #read a single album information
   def read_album(music_file)
     i = 0
     album_id = i + 1
@@ -119,7 +131,7 @@ class MusicPlayerMain < Gosu::Window
     album = Album.new(album_id, album_title,album_artist,album_artwork, album_genre,tracks)
     return album
   end
-
+  #store all albums in array
   def read_albums music_file
   count = music_file.gets().to_i()
   albums = Array.new
@@ -130,48 +142,52 @@ class MusicPlayerMain < Gosu::Window
     end
   return albums
   end
-
+  #determine which area was clicked
   def area_clicked(leftX, topY, rightX, bottomY)
      return (mouse_x > leftX && mouse_x < rightX && mouse_y > topY && mouse_y < bottomY)
   end
-
+  #draw the background
 	def draw_background
     Gosu.draw_rect(0,0,WIDTH,HEIGHT,TOP_COLOR,ZOrder::BACKGROUND,:default)
   end
-
+  #nothing in the update function all events handled by mouse clicked
 	def update
 	end
-
+  #DRAW FOR ALL SCENES
 	def draw
     case @scene
-    when :menu
-      draw_background()
-      draw_menu(@albums)
-      draw_genre_button()
-      Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
-      Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
-    when :player
-      draw_background()
-      if @current_album != 8
-        draw_album(@albums[@current_album])
-        draw_back_button()
-        display_tracks()
-      else
-        draw_back_button()
-        display_favorite_tracks()
-      end
-      external_player_button()
-      display_playing_track()
-      draw_buttons()
-      draw_volume_rocker()
-      Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
-      Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
-    when :gsort
-      draw_background()
-      display_genre()
+      #draw actions for :menu scene
+      when :menu
+        draw_background() 
+        draw_menu(@albums) 
+        draw_genre_button() 
+        # Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
+        # Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
+      #draw actions for :player scene
+      when :player
+        draw_background()
+        #check if the selected album is favorites album
+        if @current_album != 8
+          draw_album(@albums[@current_album])
+          draw_back_button()
+          display_tracks()
+        else
+          draw_back_button()
+          display_favorite_tracks()
+        end
+        external_player_button()
+        display_playing_track()
+        draw_buttons()
+        draw_volume_rocker()
+        Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
+        Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
+      #draw actions for sort by genre scene
+      when :gsort
+        draw_background()
+        display_genre()
     end
 	end
-
+  #display genre title
   def display_genre()
     i = 1
     x = 20
@@ -184,7 +200,7 @@ class MusicPlayerMain < Gosu::Window
     Gosu::Font.new(30).draw(mouse_y,700,400,ZOrder::UI)
     draw_by_genre()
   end
-
+  #draw albums in specific genre section
   def draw_by_genre()
     pop = 0
     jazz = 0
@@ -226,12 +242,14 @@ class MusicPlayerMain < Gosu::Window
       end
     end
   end
-
+  #to show or not to show the cursor in program
  	def needs_cursor?; true; end
-
+  #HANDLES ALL BUTTON DOWN EVENTS
 	def button_down(id)
 		case id
 	    when Gosu::MsLeft
+
+        #ALBUM CLICK EVENT
         if @scene == :menu && area_clicked(@album1_position[0], @album1_position[1], @album1_position[2], @album1_position[3])
           @current_album = 0
           @scene = :player
@@ -297,15 +315,23 @@ class MusicPlayerMain < Gosu::Window
           @scene = :player
           @current_album = 8
         end
+
         #GENRE SORTING EVENT
         if @scene == :menu && area_clicked(20, 525, 180, 580)
           @scene = :gsort
         end
+
         #EXTERNAL PLAYER EVENT CLICK
         if @track_playing == true && area_clicked(100,380,250,440)
           @music.pause
-          vlc = VLC::System.new
-          vlc.add_to_playlist(@current_track_location)
+          #Works on Linux with vlc installed 
+          #For Mac an alias must set to vlc system call via terminal
+          #Following commands for OSX:
+          #echo "alias vlc='/Applications/VLC.app/Contents/MacOS/VLC'" >> ~/.bash_profile
+          #echo "alias cvlc='/Applications/VLC.app/Contents/MacOS/VLC'" >> ~/.bash_profile
+          #Windows not supported
+          vlc = VLC::System.new #opens a system call to external vlc media player
+          vlc.add_to_playlist(@current_track_location) #multiple songs can be added to playlist
           vlc.play
         end
                     
@@ -315,12 +341,14 @@ class MusicPlayerMain < Gosu::Window
         else
           @current_album_track_count = @favorites_list.length
         end
+
         #PLAYER TRACK SELECT , PLAY 
         if @scene == :player
           if area_clicked(50, 50, 100, 100)
             @scene = :menu
           end
 
+          #PLAY PAUSE BUTTON EVENT
           if @track_playing == nil && area_clicked(365,368,414,521)
             track_playing = true
             @current_track = 0
@@ -332,10 +360,12 @@ class MusicPlayerMain < Gosu::Window
             @music.play
             @track_playing = true
           end
+
           #BACKWARD BUTTON
           if (@track_playing && @current_track > 0 && area_clicked(454,483,482,520))
             @current_track -= 1 #backward
             playTrack(@current_track, @albums[@current_album])
+
           #FORWARD BUTTON
           elsif (@track_playing && @current_track < @current_album_track_count && area_clicked(500,482,531,525))
             @current_track += 1  #forward
@@ -356,12 +386,14 @@ class MusicPlayerMain < Gosu::Window
             @music.volume = 1.0
             @volume = @music.volume
           end
+
           #REPEAT BUTTON EVENT
           if @current_track_repeat && area_clicked(277,478,310,519)
             @current_track_repeat = false
           elsif !@current_track_repeat && area_clicked(277,478,310,519)
             @current_track_repeat = true
           end
+
           #ADDING, REMOVING TO FAVORITES ALBUM
           if (@track_playing && area_clicked(181,475,221,517))
             @albums[@current_album].tracks[@current_track].favorite = true
@@ -400,7 +432,7 @@ class MusicPlayerMain < Gosu::Window
           end
 	      end
 	end
-
+  #display tracks for selected album
   def display_tracks()
     track_y_position = 100
     for track in @albums[@current_album].tracks
@@ -409,6 +441,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+  #draw the favorite albums tracks
   def display_favorite_tracks()
     Gosu::Image.new('./media/fav.jpg').draw(20, 100, ZOrder::UI, 0.2, 0.2)
     track_y_position = 100
@@ -420,6 +453,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+  #play tracks
   def playTrack(track, album)
     @track_playing = true
     if @current_album != 8
@@ -440,6 +474,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+  #text display the playing track
   def display_playing_track
     if @track_playing
       message = "Playing #{@playing_track_name} by #{@playing_artist}"
@@ -447,25 +482,19 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+  #draw all the albums in the :menu page
   def draw_albums(albums)
-    album_1_artwork = Gosu::Image.new(albums[0].artwork.chomp)
-    album_1_artwork.draw(@album1_position[0], @album1_position[1], ZOrder::UI, 0.8, 0.8)
-    album_2_artwork = Gosu::Image.new(albums[1].artwork.chomp)
-    album_2_artwork.draw(@album2_position[0], @album2_position[1], ZOrder::UI, 0.7, 0.7)
-    album_3_artwork = Gosu::Image.new(albums[2].artwork.chomp)
-    album_3_artwork.draw(@album3_position[0], @album3_position[1], ZOrder::UI, 0.8, 0.8)
-    album_4_artwork = Gosu::Image.new(albums[3].artwork.chomp)
-    album_4_artwork.draw(@album4_position[0], @album4_position[1], ZOrder::UI, 0.75, 0.75)
-    album_5_artwork = Gosu::Image.new(albums[4].artwork.chomp)
-    album_5_artwork.draw(@album5_position[0], @album5_position[1], ZOrder::UI, 0.56, 0.56)
-    album_6_artwork = Gosu::Image.new(albums[5].artwork.chomp)
-    album_6_artwork.draw(@album6_position[0], @album6_position[1], ZOrder::UI, 0.56, 0.56)
-    album_7_artwork = Gosu::Image.new(albums[6].artwork.chomp)
-    album_7_artwork.draw(@album7_position[0], @album7_position[1], ZOrder::UI, 0.56, 0.56)
+    i = 0
+    while (i < @albums.length)
+      album_artwork = Gosu::Image.new(albums[i].artwork.chomp)
+      album_artwork.draw(@albums_position[i][0],@albums_position[i][1],ZOrder::UI, 0.56,0.56)
+      i += 1
+    end
     favorites_artwork = Gosu::Image.new('./media/fav.jpg')
     favorites_artwork.draw(@favorites_position[0],@favorites_position[1], ZOrder::UI, 0.18, 0.18)
   end
 
+  #draw the volume rocker button at different volume
   def draw_volume_rocker()
     Gosu.draw_rect(635, 150, 50, 300, Gosu::Color::BLACK, ZOrder::UI,:default)
     if @volume == 1.0
@@ -481,20 +510,24 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+  #draw the button to open vlc external player
   def external_player_button()
     Gosu.draw_rect(100, 380, 150, 60, Gosu::Color::BLACK, ZOrder::UI,:default)
     Gosu::Font.new(20).draw("Open in VLC", 120,400, ZOrder::UI)
   end
 
+  #draw the back/return to main menu button
   def draw_back_button()
     Gosu::Font.new(20).draw("< BACK", 50, 50, ZOrder::UI)
   end
 
+  #draw  the sort by genre button
   def draw_genre_button()
     Gosu.draw_rect(25, 525, 160, 55, Gosu::Color::BLACK, ZOrder::UI,:default)
     Gosu::Font.new(20).draw("Genre Sort", 35, 540, ZOrder::UI)
   end
-
+  
+  #Draws the current album selected in :player mode
   def draw_album(album)
     x = 20
     y = 100
@@ -505,11 +538,14 @@ class MusicPlayerMain < Gosu::Window
     display_tracks()
   end
 
-  def draw_buttons
+  #Procedure Draws all the media controls
+  def draw_buttons()
     Gosu.draw_rect(100, 450, 600, 100, UI_COLOR,ZOrder::PLAYER, :default)
+    #Forward and backward button
     @forward = Gosu::Image.new('./media/forward.png')
     @forward.draw(500, 480, ZOrder::UI, 0.04,0.04)
     @forward.draw_rot(450,480,ZOrder::UI, 180, 1, 1, scale_x = 0.04, scale_y = 0.04)
+    #Toggle-able Play/Pause Button
     if @track_playing == nil
       @play = Gosu::Image.new('./media/play.png')
       @play.draw(350, 460, ZOrder::UI, 0.05,0.05)
@@ -520,7 +556,7 @@ class MusicPlayerMain < Gosu::Window
       @play = Gosu::Image.new('./media/play.png')
       @play.draw(350, 460, ZOrder::UI, 0.05,0.05)
     end
-
+    #Toggle-able Repeat Button
     if @current_track_repeat
       @repeat_active = Gosu::Image.new('./media/repeat1.png')
       @repeat_active.draw(270, 475, ZOrder::UI, 0.07, 0.07)
@@ -537,20 +573,28 @@ class MusicPlayerMain < Gosu::Window
   end
 end
 
-
+# Uses OptionParser to Take a commandline option
 options = {}
 OptionParser.new do |parser|
   options[:gui] = false
+  #for the gui mode
   parser.on("-g", "--gui", "GUI MODE MUSIC PLAYER") do
     options[:gui] = true
   end
   options[:cli] = false
+  #for the cli mode
   parser.on("-c", "--cli", "CLI MODE") do
     options[:cli] = true
+  end
+  #for help on the options
+  parser.on("-h","--help", "Help Menu") do 
+    options[:help] = true
   end
 end.parse!
 if options[:gui]
   MusicPlayerMain.new.show if __FILE__ == $0
 elsif options[:cli]
   main_menu_albums()
+elsif options[:help]
+  puts("USAGE: ruby [filename] --gui\nGUI MODE : --gui/-g\nCLI MODE: --cli,-c")
 end

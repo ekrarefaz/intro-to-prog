@@ -24,7 +24,7 @@ end
 def read_album_file()
     finished = false
     begin
-    music_file = File.new($album_file_name, "r")
+    music_file = File.new('album.txt', "r")
         if music_file
             albums = read_albums(music_file)
             music_file.close()
