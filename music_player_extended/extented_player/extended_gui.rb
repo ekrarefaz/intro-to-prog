@@ -1,8 +1,11 @@
 require 'rubygems'
 require 'gosu'
-require_relative 'input_functions'
 require 'optparse'
+require 'tk'
+# require_relative
+require_relative 'input_functions'
 require_relative 'album_functions'
+
 #Works on Linux with vlc installed 
 #For Mac an alias must set to vlc system call via terminal
 #Following commands for OSX:
@@ -73,8 +76,12 @@ class MusicPlayerMain < Gosu::Window
     y = 50
     @scene = :menu
     @album_count = nil
-    #reading album file
-    music_file = open('album.txt',"r")
+    #reading album file with ruby tk
+    root = TkRoot.new
+    root.title = "window"
+    @filename = Tk::getOpenFile
+    puts(@filename).class
+    music_file = open(@filename,"r")
     @albums = read_albums(music_file) 
     print(@albums)
     #instance variables for album absolute album positions
@@ -99,7 +106,6 @@ class MusicPlayerMain < Gosu::Window
     @favorites_list = Array.new()
     @volume = 1.0
 	end
-
   # 1 ALBUM READING
   #read a single track
   def read_track(music_file)

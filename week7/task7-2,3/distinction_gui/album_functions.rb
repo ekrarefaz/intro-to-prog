@@ -1,0 +1,393 @@
+require './input_functions'
+require 'colorize'
+# require './colors'
+
+module Genre
+    POP, CLASSIC, JAZZ, ROCK = *1..4
+end
+
+$genre_names = ["Null", "Pop", "Classic", "Jazz", "Rock"]
+$album_file = 'albums.txt'
+
+# CLASS DEFINE
+class Album 
+    attr_accessor :id, :count, :title, :artist, :cover, :genre , :tracks
+    def initialize(id, count, title, artist, cover, genre, tracks)
+        @id = id
+        @count = count
+        @title = title 
+        @artist = artist
+        @cover = cover
+        @genre = genre
+        @tracks = tracks
+    end
+end
+
+class Track
+    attr_accessor :name, :location
+    def initialize(name, location)
+        @location = location
+        @name = name 
+    end
+end
+
+# 1 ALBUM READING
+def read_track(music_file)
+    name = music_file.gets()
+    location = music_file.gets()
+    return Track.new(name,location)
+end
+
+def read_tracks(music_file)
+    i = 0
+    tracks = Array.new()
+    @count = music_file.gets().to_i()
+    while (i < count)
+        track = read_track(music_file)
+        tracks << track
+        i = i+1
+    end
+    return tracks
+end
+
+def read_album_file()
+    finished = false
+    begin
+    music_file = File.new($album_file, "r")
+        if music_file
+            albums = read_albums(music_file)
+            music_file.close()
+        else
+            puts "Wrong Input"
+        end
+    puts ("File Loaded...")
+    finished = read_string('Press ENTER...')
+    end until finished
+    return albums
+end
+
+def read_album(music_file)
+    i = 0
+    album_id = i + 1
+    album_artist = music_file.gets().to_i
+    album_artist = music_file.gets()
+    album_title = music_file.gets()
+    album_cover = music_file.gets()
+    album_genre = music_file.gets().to_i()
+    tracks = read_tracks(music_file)
+    album = Album.new(album_id, album_count, album_title,album_artist,album_cover, album_genre,tracks)
+    return album
+end
+
+def read_albums music_file
+	count = music_file.gets().to_i
+	albums = Array.new
+        while (0 < count)
+            album = read_album(music_file)
+            albums << album
+            count -= 1
+        end
+	return albums
+end
+
+# ALBUM PRINTING
+def print_album(album)
+    puts ("Album artist : #{album.artist}")
+    puts ("Album title : #{album.title}")
+    puts('Genre ' + album.genre.to_s)
+    puts($genre_names[album.genre])
+    print_tracks(album.tracks)
+end
+
+def print_albums(albums)
+    puts albums.count
+    count = albums.length
+    i = 0
+    while(i < count)
+        print_album(albums[i])
+        i += 1
+    end
+end
+
+def print_tracks(tracks)
+  i = 0
+  while (i<tracks.length)
+    print("Track ID #{i} - ".blue)
+    print_track(tracks[i])
+    i += 1
+  end
+end
+
+def print_track(track)
+  print("Track Title: #{track.name}".red)
+  print("Track Location: #{track.location}".red)
+end
+
+# # 2 DISPLAY ALBUMS
+# def display_albums(albums)
+#     finished = false
+#     begin
+#         puts("Display Album".bg_blue)
+#         puts("1 - Display All Album".bg_brown)
+#         puts("2 - Display by Genre".bg_brown)
+#         puts("3 - Return to Main Menu".bg_brown)
+#         option = read_integer_in_range("Enter Choice: ", 1,3)
+#         case option
+#         when 1
+#             print_albums(albums)
+#         when 2
+#             print_albums_by_genre(albums)
+#         when 3
+#             puts("Returning to Main Menu..".bg_red)
+#             finished = true
+#         end
+#     end until finished
+# end
+
+# def print_albums_by_genre(albums)
+#     puts('Select Genre'.bg_blue)
+#     puts('1 Pop, 2 Classic, 3 Jazz , 4 Rock'.green)
+#     search_genre = read_integer('Enter number: ')
+#     i = 0
+#     while i < albums.length
+#         if search_genre == albums[i].genre
+#             print_album(albums[i])
+#             return albums[i]
+#         end
+#         i += 1
+#     end
+# end
+
+def print_albums_artists(albums)
+    count = albums.length
+    i = 0
+    while(i < count)
+        print("Artist #{i}--> ")
+        print_album_artist(albums[i])
+        i += 1
+    end
+end
+
+def print_album_artist(album)
+    print(album.artist)
+    return 
+end
+
+def print_album_title(album)
+    puts album.title
+end
+
+def print_albums_id(albums)
+    count = albums.length
+    i = 0 
+    while(i < count)
+        print("ID - #{i} -->> ".bg_brown)
+        print_album_title(albums[i])
+        i += 1
+    end
+end
+
+# # 3 PLAY ALBUMS
+# def play_album(albums)
+#     finished = false
+#     album = nil
+#     begin
+#         puts 'Play Albums:'.bg_blue
+#         puts '1 - Play by ID'.bg_cyan
+#         puts '2 - Search'.bg_cyan
+#         puts '3 - Return'.bg_cyan
+#         choice = read_integer_in_range("Option: ", 1, 3)
+#         case choice
+#         when 1
+#             album = search_id(albums)
+#             print_tracks(album.tracks)
+#             play_tracks(album.tracks)
+#         when 2
+#             album = search_menu(albums)
+#             print_tracks(album.tracks)
+#             play_tracks(album.tracks)
+#         when 3
+#             finished = true
+#         else
+#             puts 'Please select again'
+#         end
+#     end until finished
+# end
+
+def search_id(albums) #search album by id
+    print_albums_id(albums)
+    puts("Select ID: ")
+    id = read_integer_in_range("Enter ID ", 0 ,albums.count-1)
+    return albums[id]
+end
+
+def search_by_artist(albums)
+    print_albums_artists(albums)
+    puts("Select Artist ID: ".green)
+    id = read_integer_in_range("Enter ID ", 0 ,albums.count-1)
+    return albums[id]
+end
+
+def search_by_genre(albums)
+    album = print_albums_by_genre(albums)
+    return album
+end
+
+def play_tracks(tracks)
+    track_id = read_integer_in_range("Enter Track ID: ",0, tracks.count-1)
+    trackname = tracks[track_id].name
+    puts("Playing -- #{trackname}")
+    music_logo = "\U+1D161"
+    puts(music_logo * 10)
+    sleep(2)
+    puts("-- Player Exited --".bg_blue())
+end
+
+# # 3 > 2 SEARCH MENU
+# def search_menu(albums)
+#     finished = false 
+#     begin
+#         puts("1 - Search by Artist".bg_blue)
+#         puts("2 - Search by Genre".bg_blue)
+#         puts("3 - Exit".bg_blue)
+#         option = read_integer_in_range("Enter Option: ", 1, 2)
+#         case option 
+#         when 1
+#             album = search_by_artist(albums)
+#             return album
+#             finished = true
+#         when 2
+#             album = search_by_genre(albums)
+#             return album
+#             finished = true
+#         when 3
+#             puts("Exiting..".bg_blue.red)
+#             finished = true
+#         end
+#     end until finished
+# end
+
+# # 4 UPDATE ALBUM
+# def update_albums(albums)
+#     finished = false
+#     begin
+#         puts("1 - Update Title".bg_cyan)
+#         puts("2 - Update Genre".bg_cyan)
+#         puts("3 - Exit to Main Menu".bg_cyan)
+#         option = read_integer_in_range("Enter Option: ", 1, 2)
+#         case option
+#         when 1
+#             album = search_id(albums)
+#             update_title(album)
+#             puts("Press Enter")
+#             finished = gets()
+#         when 2
+#             album = search_id(albums)
+#             update_genre(album)
+#             puts("Press Enter")
+#             finished = gets()
+#         when 3
+#             puts("Exiting".bg_red)
+#             finished = true
+#         end until finished
+#     end
+# end
+
+# Update Title
+def update_title(album)
+    finished = false 
+    print("Title --> #{album.title}")
+    new_title = read_string("New Title: ")
+    album.title = new_title
+    print_album_title(album)
+end
+#Update Genre
+def update_genre(album)
+    genre = album.genre
+    puts("Genre --> #{genre} - #{$genre_names[genre]}")
+    puts('1 Pop, 2 Classic, 3 Jazz , 4 Rock'.green)
+    new_genre = read_integer_in_range("New Genre: ",1,4)
+    album.genre = new_genre
+end
+
+# EXIT AND SAVE
+def write_track track, music_file #save individual track
+    music_file.puts track.name
+    music_file.puts track.location
+end
+
+def write_tracks tracks, music_file #save all tracks by loop
+    count = tracks.length
+    music_file.puts(count)
+    i = 0
+    while (i < count)
+        write_track(tracks[i], music_file)
+        i += 1
+    end
+end
+
+def save_album (album, music_file)  #save individual album
+    music_file.puts (album.artist)
+    music_file.puts (album.title)
+    music_file.puts (album.cover)
+    music_file.puts (album.genre)
+    write_tracks(album.tracks, music_file)
+end
+
+def save_albums(albums, music_file) #save all albums by loop
+    count = albums.length
+    music_file.puts(count)
+    i = 0
+    while(i < count )
+        save_album(albums[i], music_file)
+        i += 1
+    end
+end
+
+def save_file_changes(albums)   #save changes to file by writing.
+    if $album_file
+        music_file = File.new($album_file, "w")
+        if music_file
+            save_albums(albums,music_file)
+            music_file.close()
+        else
+            puts ("FILE LOAD FAIL".bg_red)
+        end
+    else
+        puts("ERROR 404")
+    end
+end
+# MAIN MENU
+def main_menu_albums()
+    finished = false
+    begin
+    puts 'Main Menu:'.bg_blue
+    puts '1 - Read Album'.bg_cyan
+    puts '2 - Display Album'.bg_cyan
+    puts '3 - Play Album'.bg_cyan
+    puts '4 - Update Album'.bg_cyan
+    puts '5 - Exit'.bg_cyan
+    choice = read_integer_in_range("Option: ", 1, 5)
+        case choice
+        when 1
+            albums = read_album_file()
+        when 2
+            display_albums(albums)
+        when 3
+            play_album(albums)
+        when 4
+            update_albums(albums)
+        when 5
+            save_file_changes(albums)
+            puts("Exiting Application".bg_red.gray)
+            finished = true
+        else
+            puts 'Please select again'
+        end
+    end until finished
+end
+
+# MAIN
+def main()
+    main_menu_albums()
+end
