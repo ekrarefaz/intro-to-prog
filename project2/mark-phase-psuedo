@@ -1,0 +1,8 @@
+Mark(root)
+	if markedBit(root) = false then
+    	markedBit(root) = true
+    end
+    For each v referenced by root
+        Mark(v)
+    end
+end
