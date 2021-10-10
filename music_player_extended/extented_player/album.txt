@@ -38,7 +38,7 @@ sounds/06-Embrace_Me_You_Child.wav
 Poets of the Fall
 Carnival of Rust
 ./media/carnival.jpg
-3
+4
 4
 Carnival of Rust
 ./sounds/Carnival-of-Rust.ogg
@@ -51,7 +51,7 @@ sounds/cradled-in-love.ogg
 Eluveitie
 Origins
 ./media/origins.jpg
-4
+5
 2
 The Call of the Mountains
 ./sounds/The-Call-Of-The-Moutains.ogg
@@ -60,7 +60,7 @@ sounds/nameless.ogg
 Pink Floyd
 Greatest Hits
 ./media/pink-floyd.jpg
-3
+4
 3
 High Hopes
 ./sounds/High-Hopes.ogg
