@@ -102,8 +102,11 @@ class Food
   def initialize(image, type)
     @type = type;
     @image = Gosu::Image.new(image)
+    @smoke = Gosu::Image.new("./media/smoke.png")
     @vel_x = rand(-2 .. 2)  # rand(1.2 .. 2.0)
     @vel_y = rand(-2 .. 2)
+    @smoke_duration = 1
+    @time_to_flash = nil
     @angle = 0
 
   # replace hard coded values with global constants:
@@ -112,46 +115,36 @@ class Food
     @y = rand * HEIGHT
     @score = 0
   end
-end
 
-def move food
-  food.x += food.vel_x
-  food.x %= WIDTH
-  food.y += food.vel_y
-  food.y %= HEIGHT
-  # food.x += Gosu.offset_x(rand(360),food.vel_x)
-  # food.y += Gosu.offset_y(rand(360),food.vel_y)
+  def move food
+    food.x += food.vel_x
+    food.x %= WIDTH
+    food.y += food.vel_y
+    food.y %= HEIGHT
+    # food.x += Gosu.offset_x(rand(360),food.vel_x)
+    # food.y += Gosu.offset_y(rand(360),food.vel_y)
 
-end
-
-def change_direction food
-  if rand(300) < 1
-    food.vel_x *= -1
   end
-  
-  if rand(300) < 1
-    food.vel_y *= -1
-  end
-end
 
-def draw_food food
-  food.image.draw_rot(food.x, food.y, ZOrder::FOOD, food.angle)
-end
-
-class Smoke 
-  attr_accessor :x, :y, :end
-
-  def initialize(window, x , y)
-    @window
-    @x = x 
-    @y = y 
-    @radius = 20
-    @image = Gosu::Image.new('./media/smoke.png')
-  end
-    
-    def draw
-      @image.draw(@x-@radius, @y-@radius, 2)
+  def change_direction
+    if rand(2) == 0
+      @smoketimer = Time.now + @smoke_duration
+      @vel_x *= -1
     end
+    if rand(2) == 0
+      @smoketimer = Time.now + @smoke_duration
+      @vel_y *= -1
+    end
+  end
+
+  def draw 
+    if @smoketimer == nil or @smoketimer < Time.now
+      @image.draw_rot(@x, @y, ZOrder::FOOD,@angle)
+      @smoketimer = nil
+    else
+      @smoke.draw_rot(@x,@y,ZOrder::FOOD,@angle)
+    end
+  end
 end
 
 class FoodHunterGame < (Example rescue Gosu::Window)  ####################################
@@ -194,11 +187,12 @@ class FoodHunterGame < (Example rescue Gosu::Window)  ##########################
       move_down @player
     end
 
-    @all_food.each { |food| move food }
     @all_food.each do |food|
-      change_direction food
-      
-    end 
+      food.move food
+      if rand(400) == 0
+        food.change_direction
+      end
+    end
 
     self.remove_food
 
@@ -209,9 +203,7 @@ class FoodHunterGame < (Example rescue Gosu::Window)  ##########################
    if rand(100) < 2 and @all_food.size < 4
       @all_food.push(generate_food)
    end
-   if rand(200)< 2 
-    @all_food.each {|food| change_direction food}
-   end
+  
 
    # change the hunted food randomly:
    if rand(400) == 0
@@ -232,7 +224,9 @@ class FoodHunterGame < (Example rescue Gosu::Window)  ##########################
   def draw
     @background_image.draw(0, 0, ZOrder::BACKGROUND)
     draw_hunter @player
-    @all_food.each { |food| draw_food food }
+    @all_food.each do |food|
+      food.draw
+    end
     @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, Gosu::Color::YELLOW)
   end
 

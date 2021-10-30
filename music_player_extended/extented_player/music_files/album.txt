@@ -1,0 +1,72 @@
+7
+Neil Diamond
+Greatest Hits
+./media/neil2.jpg
+1
+3
+Crackling Rose
+./sounds/Cracklin-Rosie.ogg
+Soolaimon
+./sounds/Soolaimon.ogg
+Sweet Caroline
+./sounds/Sweet-Caroline.ogg
+Platters
+Greatest Hits
+./media/platters2.jpg
+3
+2
+Twilight Time
+./sounds/Twilight-Time.ogg
+The Great Pretender
+./sounds/The-Great-Pretender.ogg
+Don McClean
+American Pie
+./media/don.png
+2
+0
+Carly Simon
+No Secrets
+./media/simon2.jpg
+2
+3
+The Carter Family
+./sounds/The-Carter-Family.ogg
+Your So Vain
+./sounds/Youre-So-Vain.ogg
+Embrace me You Child
+sounds/06-Embrace_Me_You_Child.wav
+Poets of the Fall
+Carnival of Rust
+./media/carnival.jpg
+4
+4
+Carnival of Rust
+./sounds/Carnival-of-Rust.ogg
+Sleep
+sounds/sleep.ogg
+Lift 
+sounds/lift.ogg
+Cradled in Love
+sounds/cradled-in-love.ogg
+Eluveitie
+Origins
+./media/origins.jpg
+5
+2
+The Call of the Mountains
+./sounds/The-Call-Of-The-Moutains.ogg
+The Nameless
+sounds/nameless.ogg
+Pink Floyd
+Greatest Hits
+./media/pink-floyd.jpg
+4
+3
+High Hopes
+./sounds/High-Hopes.ogg
+Comfortably Numb
+./sounds/Comfortably-numb.ogg
+Breathe
+sounds/breathe.ogg
+
+

@@ -52,15 +52,16 @@ end
 def read_album_file()
     finished = false
     begin
-    $album_file = read_string('Enter Album File ')
-    music_file = File.new($album_file, "r")
-        if music_file
+        $album_file = read_string('Enter Album File ')
+       if (File.exists?($album_file))
+            (music_file = File.new($album_file, "r"))
             albums = read_albums(music_file)
+            puts ("File Loaded...")
             music_file.close()
         else
             puts "Wrong Input"
         end
-    puts ("File Loaded...")
+    
     finished = read_string('Press ENTER...')
     end until finished
     return albums
@@ -235,8 +236,8 @@ def play_tracks(tracks)
     track_id = read_integer_in_range("Enter Track ID: ",0, tracks.count-1)
     trackname = tracks[track_id].name
     puts("Playing -- #{trackname}")
-    music_logo = "\U+1D161"
-    puts(music_logo * 10)
+    # music_logo = "\U+1D161"
+    # puts(music_logo * 10)
     sleep(2)
     puts("-- Player Exited --".bg_blue())
 end

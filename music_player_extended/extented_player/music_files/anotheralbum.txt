@@ -1,0 +1,26 @@
+3
+Neil Diamond
+Greatest Hits
+./media/neil2.jpg
+1
+3
+Crackling Rose
+./sounds/Cracklin-Rosie.ogg
+Soolaimon
+./sounds/Soolaimon.ogg
+Sweet Caroline
+./sounds/Sweet-Caroline.ogg
+Platters
+Greatest Hits
+./media/platters2.jpg
+3
+2
+Twilight Time
+./sounds/Twilight-Time.ogg
+The Great Pretender
+./sounds/The-Great-Pretender.ogg
+Don McClean
+American Pie
+./media/don.png
+2
+0

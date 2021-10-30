@@ -1,5 +1,5 @@
-require './input_functions'
-require_relative 'colors'
+require_relative './.lib/input_functions'
+require_relative './.lib/colors'
 require 'vlc-client' #https://github.com/mguinada/vlc-client
 
 # 1 ALBUM READING
@@ -24,7 +24,7 @@ end
 def read_album_file()
     finished = false
     begin
-    music_file = File.new('album.txt', "r")
+    music_file = File.new('./music_files/album.txt', "r")
         if music_file
             albums = read_albums(music_file)
             music_file.close()
@@ -342,12 +342,25 @@ def main_menu_albums()
         case choice
         when 1
             albums = read_album_file()
+            @album_read = true
         when 2
-            display_albums(albums)
+            if @album_read
+                display_albums(albums)
+            else
+                puts("Please Read Album First")
+            end
         when 3
-            play_album(albums)
+            if @album_read
+                play_album(albums)
+            else
+                puts("Please Read Album First")
+            end
         when 4
-            update_albums(albums)
+            if @album_read
+                update_albums(albums)
+            else
+                puts("Please Read Album First")
+            end
         when 5
             save_file_changes(albums)
             puts("Exiting Application".bg_red.gray)
