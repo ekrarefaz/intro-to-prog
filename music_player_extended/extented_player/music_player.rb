@@ -2,10 +2,10 @@
 # StudentID: 103494172
 # Program Name: Super Extented Music Player
 # Attemping Grade: HD
-# required dependencies: 'gosu', 'optparse', 'tk', 'input_functions.rb', 'colors.rb'
+# required dependencies: 'gosu', 'optparse', 'tcl/tk', 'input_functions.rb', 'colors.rb'
 # *all the relative dependencies can be found in .lib folder in this directory*
 
-require 'rubygems'
+
 require 'gosu'
 require 'optparse'
 require 'tk'
@@ -19,11 +19,12 @@ require_relative 'album_functions'
 #echo "alias vlc='/Applications/VLC.app/Contents/MacOS/VLC'" >> ~/.bash_profile
 #echo "alias cvlc='/Applications/VLC.app/Contents/MacOS/VLC'" >> ~/.bash_profile
 #Windows not supported
-require "vlc-client"
+require "vlc-client" #https://github.com/mguinada/vlc-client
 
-TOP_COLOR = Gosu::Color.new(0xFF707070)
-BOTTOM_COLOR = Gosu::Color.new(0xFF707070)
+TOP_COLOR = Gosu::Color.new(0xFF183929)
 UI_COLOR = Gosu::Color.new(0xFFffffff)
+SCOLOR = Gosu::Color.new(0xFF0e3d5e)
+
 
 #zorder enumeration
 module ZOrder
@@ -86,7 +87,7 @@ class MusicPlayerMain < Gosu::Window
 	  super WIDTH, HEIGHT
 	  self.caption = "Music Player"
 
-    #scene control variable
+    #scene control variables
     @scene = :menu1
     @album_count = nil
 
@@ -95,7 +96,8 @@ class MusicPlayerMain < Gosu::Window
     root.title = "window"
     @filename = Tk::getOpenFile
     music_file = open(@filename,"r")
-    @albums = read_albums(music_file) 
+    @albums = read_albums(music_file)
+    root.destroy() 
     #print(@albums)
     
     #instance variables for album absolute album positions
@@ -113,10 +115,10 @@ class MusicPlayerMain < Gosu::Window
     @album8_position = [300, 50, 450, 250]
     @album9_position = [550, 50, 700, 250]
 
-    #bunch of empty arrays declared
-    @favorites_list = []
-    @favorite_dump = []
-    @genre_tracklist = []
+    #bunch of empty arrays declared for later use
+    @favorites_list = [] #array for favorite tracks object
+    @favorite_dump = [] #array for favorite tracks name
+    @genre_tracklist = [] #array for tracks of selected genre
 
     #array holding all the album positions
     @albums_position = [@album1_position,@album2_position,@album3_position,@album4_position,@album5_position,@album6_position,@album7_position,@album8_position]
@@ -142,8 +144,8 @@ class MusicPlayerMain < Gosu::Window
   def read_tracks_by_genre(selected_genre)
     i = 0
     while (i < @albums.length)
+      k = 0
       if(selected_genre == @albums[i].genre)
-        k = 0
         puts @albums[i].tracks
         k = 0
         while(k < @albums[i].tracks.length)
@@ -156,6 +158,7 @@ class MusicPlayerMain < Gosu::Window
       end
     end
   end
+
 
   #nothing in the update function all events handled by mouse clicked
 	def update
@@ -170,11 +173,13 @@ class MusicPlayerMain < Gosu::Window
     Gosu.draw_rect(0,0,WIDTH,HEIGHT,TOP_COLOR,ZOrder::BACKGROUND,:default)
   end
 
+
   #draw next and previous :menu paging button
   def draw_favorites_box()
     Gosu.draw_rect(50, 280, 700, 115, Gosu::Color::BLACK, ZOrder::UI,:default)
     Gosu::Font.new(40).draw("Favorites Playlist",265,320,ZOrder::UI)
   end
+
 
   # show genre button
   def draw_genre_box()
@@ -182,11 +187,13 @@ class MusicPlayerMain < Gosu::Window
     Gosu::Font.new(40).draw("Genre Sort",300,450,ZOrder::UI)
   end
 
+
   # close button for the application
   def close_box()
     Gosu.draw_rect(775,15,20,20,Gosu::Color::BLACK, ZOrder::UI, :default)
     Gosu::Font.new(20).draw("x",780,15,ZOrder::UI)
   end
+
 
   #genre sort menu
   def genre_sort_menu()
@@ -200,6 +207,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #draw next and previous buttons for paging
   def draw_page_button()
     if @scene == :menu1 || :menu2 || :menu3
@@ -208,6 +216,7 @@ class MusicPlayerMain < Gosu::Window
       Gosu::Font.new(50).draw(">",770,125,ZOrder::UI)
     end
   end
+
 
   #draw the volume rocker button at different volume
   def draw_volume_rocker()
@@ -225,27 +234,22 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #draw the button to open vlc external player
   def external_player_button()
     @external_button = Gosu::Image.new('./media/vlc.png')
     @external_button.draw(560, 480, ZOrder::UI,0.08,0.08)
   end
 
+
   #draw the back/return to main menu button
   def draw_back_button()
     Gosu::Font.new(20).draw("< BACK", 50, 50, ZOrder::UI)
   end
 
-  #draw player buttons
-  def draw_buttons()
-    Gosu.draw_rect(0, 450, 820, 250, UI_COLOR,ZOrder::PLAYER, :default)
-
-    #Forward and backward button
-    @forward = Gosu::Image.new('./media/forward.png')
-    @forward.draw(460, 495, ZOrder::UI, 0.05,0.05)
-    @forward.draw_rot(280,495,ZOrder::UI, 180, 1, 1, scale_x = 0.05, scale_y = 0.05)
-
-    #Toggle-able Play/Pause Button
+  
+  #Toggle-able Play/Pause Button
+  def draw_play_pause_button()
     if @track_playing == nil
       @play = Gosu::Image.new('./media/play.png')
       @play.draw(360, 480, ZOrder::UI, 0.05,0.05)
@@ -256,8 +260,19 @@ class MusicPlayerMain < Gosu::Window
       @play = Gosu::Image.new('./media/play.png')
       @play.draw(360, 480, ZOrder::UI, 0.05,0.05)
     end
+  end
 
-    #Toggle-able Repeat Button
+
+  #Forward and backward button
+  def draw_forward_backward_button()
+    @forward = Gosu::Image.new('./media/forward.png')
+    @forward.draw(460, 495, ZOrder::UI, 0.05,0.05)
+    @forward.draw_rot(280,495,ZOrder::UI, 180, 1, 1, scale_x = 0.05, scale_y = 0.05)
+  end
+
+
+  #Toggle-able Repeat Button
+  def draw_repeat_button()
     if @current_track_repeat
       @repeat_active = Gosu::Image.new('./media/repeat1.png')
       @repeat_active.draw(180, 495, ZOrder::UI, 0.09, 0.09)
@@ -265,8 +280,11 @@ class MusicPlayerMain < Gosu::Window
       @repeat_inactive = Gosu::Image.new('./media/repeat_inactive.png')
       @repeat_inactive.draw(180, 495, ZOrder::UI, 0.25, 0.25)
     end
+  end
 
-    #Toggle-able Favorite Button Click
+  
+  #Toggle-able Favorite Button Click
+  def draw_favorite_toggle_button()
     if(@favorite_dump.include? @playing_track_name)
       @favorite_active = Gosu::Image.new('./media/favorite_active.jpeg')
       @favorite_active.draw(70,495,ZOrder::UI,0.26,0.26)
@@ -274,13 +292,39 @@ class MusicPlayerMain < Gosu::Window
       @favorite = Gosu::Image.new('./media/favorite_inactive.png')
       @favorite.draw(70,495,ZOrder::UI, 0.26,0.26)
     end
+  end
 
-    #Draw Muted Button
+
+  #Draw Muted Button
+  def draw_muted_button()
     if @volume == 0.0
       @muted = Gosu::Image.new('./media/muted.png')
       @muted.draw(750,480,ZOrder::UI, 0.05,0.05)
     end
   end
+
+
+  #draw player buttons
+  def draw_buttons()
+    #draw player control box
+    Gosu.draw_rect(0, 450, 820, 250, UI_COLOR,ZOrder::PLAYER, :default)
+
+    #Toggle-able Play/Pause Button
+    draw_play_pause_button()
+
+    #Forward Backward button
+    draw_forward_backward_button()
+
+    #Toggle-able Repeat Button
+    draw_repeat_button()
+
+    #Toggle-able Favorite Button Click
+    draw_favorite_toggle_button()
+
+    #Draw Muted Button
+    draw_muted_button()
+  end
+
 
   #display tracks for selected album
   def display_tracks()
@@ -290,6 +334,7 @@ class MusicPlayerMain < Gosu::Window
       track_y_position += 35
     end
   end
+
 
   # display tracks in genre sort menu
   def display_tracks_by_genre()
@@ -304,6 +349,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #draw the favorite albums tracks
   def display_favorite_tracks()
     track_y_position = 100
@@ -316,14 +362,16 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #text display the playing track
   def display_playing_track
     if @track_playing
-      message = "Playing #{@playing_track_name} by #{@playing_artist}"
-      Gosu::Font.new(30).draw(message, 400, 350, ZOrder::UI)
+      message = "Playing #{@playing_track_name}"
+      Gosu::Font.new(30).draw(message, 350, 370, ZOrder::UI)
     end
   end
-  
+
+
   #Draws the current album selected in :player mode
   def draw_album(album)
     x = 20
@@ -334,6 +382,7 @@ class MusicPlayerMain < Gosu::Window
     end
     display_tracks()
   end
+
 
   #draw all the albums in the respective :menu1/:menu2 page
   def draw_albums(albums)
@@ -357,20 +406,49 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
+  #mouse hover over albums effect
   def mouse_over_album()
     i = 0
     while (i < @albums.length)
       if ((mouse_x > @albums_position[i][0] && mouse_x < @albums_position[i][2]) && ( mouse_y > @albums_position[i][1] && mouse_y < @albums_position[i][3]))
-        Gosu.draw_rect(@albums_position[i][0]+50 ,40, 100, 5, Gosu::Color::BLACK, ZOrder::PLAYER, mode=:default)
+        Gosu.draw_rect(@albums_position[i][0]+50 ,40, 100, 5, UI_COLOR, ZOrder::PLAYER, mode=:default)
       end
       i += 1
     end
   end
 
+
+  #mouse hover over options effect
+  def mouse_over_favorites()
+    if ((mouse_x > @favorites_position[0] && mouse_x < @favorites_position[2]) && ( mouse_y > @favorites_position[1] && mouse_y < @favorites_position[3]))
+      Gosu.draw_rect(50, 280, 700, 115,SCOLOR,ZOrder::UI,:default)
+      Gosu::Font.new(40).draw("Favorites Playlist",265,320,ZOrder::UI)
+    end
+  end
+
+
+  def mouse_over_genrebox()
+    if ((mouse_x > 50 && mouse_x < 750) && ( mouse_y > 410 && mouse_y < 525))
+      Gosu.draw_rect(50, 410, 700, 115,SCOLOR,ZOrder::UI,:default)
+      Gosu::Font.new(40).draw("Genre Sort",300,450,ZOrder::UI)
+    end
+  end
+
+
+  # mouse hover effects
+  def mouse_over_menu()
+    mouse_over_album()
+    mouse_over_favorites()
+    mouse_over_genrebox()
+  end
+
+
   # draws albums
   def draw_menu(albums)
     draw_albums(albums)
   end
+
 
   #DRAW FOR ALL SCENES
 	def draw
@@ -378,51 +456,96 @@ class MusicPlayerMain < Gosu::Window
     case @scene
       #draw actions for :menu scene
       when :menu1
+        # draw background
         draw_background()
+
+        #draw menu1 albums
         draw_menu(@albums)
+
+        #draw favorites option
         draw_favorites_box()
+
+        #draw genre option
         draw_genre_box()
+
+        #draw the paging button
         draw_page_button()
-        mouse_over_album()
-        # COORDINATES DEBUG
-        # Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
-        # Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
+
+        #mouse hover effect function
+        mouse_over_menu()
+
+        #COORDINATES DEBUG
+        #Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
+        #Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
       when :menu2
-        draw_background()         
+        #draw background
+        draw_background() 
+        
+        #draw albums for menu2
         if (@albums.length > 3)
           draw_menu(@albums)
         else
           Gosu::Font.new(30).draw("NO ALBUMS",200,200,ZOrder::UI)
-        end 
+        end
+        
+        #draw favorites option
         draw_favorites_box()
+
+        #draw genre option
         draw_genre_box()
+
+        #draw paging buttons
         draw_page_button()
-        mouse_over_album
-        # COORDINATES DEBUG
-        # Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
-        # Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI
+
+        #mouse hover effects
+        mouse_over_menu()
+
+        #COORDINATES DEBUG
+        #Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
+        #Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI
       when :menu3
+        #draw background
         draw_background() 
         if (@albums.length > 5)
           draw_menu(@albums)
         else
           Gosu::Font.new(30).draw("NO ALBUMS",200,200,ZOrder::UI)
         end
+
+        #draw favorites option
         draw_favorites_box()
+
+        #draw genre option
         draw_genre_box()
+
+        #draw paging option
         draw_page_button()
-        mouse_over_album()
-        # COORDINATES DEBUG
-        # Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
-        # Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI
+
+        #mouse hover effects
+        mouse_over_menu()
+
+        #COORDINATES DEBUG
+        #Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
+        #Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI
       when :genre_sort
-        draw_background() 
+        #draw background
+        draw_background()
+
+        #draw button to return to menu
         draw_back_button()
+
+        #draw genre select buttons
         genre_sort_menu()
+
+        #draw tracks for selected genre
         display_tracks_by_genre()
+
+        #draw playing track
+        display_playing_track()
 
       #draw actions for :player scene
       when :player
+        #draw background
         draw_background()
 
         #check if the selected album is favorites album
@@ -434,16 +557,25 @@ class MusicPlayerMain < Gosu::Window
           draw_back_button()
           display_favorite_tracks()
         end
+
+        #redirect to external player
         external_player_button()
+
+        #draw playing track
         display_playing_track()
+
+        #draw player control buttons
         draw_buttons()
+
+        #draw volume rocker
         draw_volume_rocker()
 
-        # COORDINATES DEBUG
-        # Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
-        # Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI
+        #COORDINATES DEBUG
+        #Gosu::Font.new(30).draw(mouse_x,700,100,ZOrder::UI)
+        #Gosu::Font.new(30).draw(mouse_y,700,200,ZOrder::UI)
       end
 	end
+
 
   #to show the cursor in program
  	def needs_cursor?; true; end
@@ -457,6 +589,7 @@ class MusicPlayerMain < Gosu::Window
     return (mouse_x > leftX && mouse_x < rightX && mouse_y > topY && mouse_y < bottomY)
   end
  
+
   # page through multiple album pages
   def menu_paging_click()
     if @scene == :menu1
@@ -476,6 +609,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   # select genre click event
   def select_genre()
     y = 105
@@ -485,7 +619,6 @@ class MusicPlayerMain < Gosu::Window
         @genre_tracklist.clear
         selected_genre = i
         read_tracks_by_genre(selected_genre)
-        puts @genre_tracklist
         break
       else
         y += 100
@@ -493,6 +626,7 @@ class MusicPlayerMain < Gosu::Window
       end
     end
   end
+
 
   # selecting track in genre sort menu
   def select_track_by_genre()
@@ -508,17 +642,18 @@ class MusicPlayerMain < Gosu::Window
       else
         yT += 35
         yB += 30
+        i += 1
       end
-      i += 1
+
     end
   end
 
+
   #close application click
   def close_application()
-    if area_clicked(775,15,795,45)
-      close()
-    end
+    close() if area_clicked(775,15,795,45)
   end
+
 
   #favorites album click event
   def favorites_album_click()
@@ -528,12 +663,14 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #genre sorted menu click event
   def genre_sort_click()
     if area_clicked(50,415,750,525)
       @scene = :genre_sort
     end
   end
+
 
   #PLAY PAUSE BUTTON EVENT
   def play_pause_click()
@@ -566,6 +703,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+  
   #BACKWARD BUTTON
   def forward_backward_click()
     if @current_track == nil
@@ -586,6 +724,8 @@ class MusicPlayerMain < Gosu::Window
     end
   end
   
+
+
   #VOLUME BUTTON EVENT
   def volume_click()
     if @track_playing && area_clicked(750,380,780,450)
@@ -603,6 +743,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #ADDING, REMOVING TO FAVORITES ALBUM
   def add_to_favorites()
     if(@current_album != "favorites")
@@ -613,12 +754,10 @@ class MusicPlayerMain < Gosu::Window
         #checks if already in favorite
         if @favorite_dump.include? favorite_track_name
           @favorite_dump.delete favorite_track_name
-          #print "yes"
           i = 0
           while (i < @favorites_list.length)
             if @favorites_list[i].name == favorite_track_name
               @favorites_list.delete @favorites_list[i]
-              #puts "deleted"
               break
             else
               i += 1
@@ -628,11 +767,11 @@ class MusicPlayerMain < Gosu::Window
           @favorite_dump << favorite_track_name
           favorite_track = Favorites.new(@albums[@current_album].tracks[@current_track].name, @albums[@current_album].tracks[@current_track].location, @albums[@current_album].artist)
           @favorites_list << favorite_track
-          puts(favorite_track)
         end
       end
     end
   end
+
 
   #REPEAT BUTTON EVENT (Loops the Current Song)
   def repeat_song()
@@ -649,6 +788,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   # Unmute Click Event When Volume is muted/0
   def mute()
     if @track_playing
@@ -660,6 +800,7 @@ class MusicPlayerMain < Gosu::Window
       end
     end
   end
+
 
   #EXTERNAL PLAYER EVENT CLICK
   def external_player_click()
@@ -673,6 +814,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #all player controls clustered into one function for ease of use
   def player_controls_click()
     play_pause_click()
@@ -683,6 +825,7 @@ class MusicPlayerMain < Gosu::Window
     external_player_click()
     mute()
   end
+
 
   #handles the clicking on tracks
   def track_click_event()
@@ -709,6 +852,7 @@ class MusicPlayerMain < Gosu::Window
     end
   end
 
+
   #handles all player scene click events
   def player_scene_click_events()  
     if area_clicked(50, 50, 100, 100)
@@ -729,7 +873,7 @@ class MusicPlayerMain < Gosu::Window
 
   #Play/Pause using the space bar
   def keyboard_play_pause()
-    if @track_playing == nil
+    if @track_playing == nil && @scene != :genre_sort
       @track_playing = true
       @current_track = 0
       play_track(@current_track, @albums[@current_album])
@@ -741,6 +885,7 @@ class MusicPlayerMain < Gosu::Window
       @track_playing = true
     end
   end
+
 
   #mute volume using keyboard 'M'
   def keyboard_mute()
@@ -754,6 +899,7 @@ class MusicPlayerMain < Gosu::Window
       end
     end
   end
+
 
   #HANDLES ALL BUTTON DOWN EVENTS
 	def button_down(id)
@@ -859,10 +1005,9 @@ class MusicPlayerMain < Gosu::Window
         @music.volume = @volume
       end
 
-
     #play/pause song with spacebar
     when Gosu::KbSpace
-      if(@scene == :player)
+      if(@scene == :player || @scene == :genre_sort)
         keyboard_play_pause()
       end
 
@@ -884,9 +1029,9 @@ class MusicPlayerMain < Gosu::Window
 	  end
   end
 
-                                                #########################
-                                                ## TRACK PLAY FUNCTION ##
-                                                #########################
+                                            #########################
+                                            ## TRACK PLAY FUNCTION ##
+                                            #########################
 
   # play track mechanism
   def play_track(track, album)
@@ -894,22 +1039,17 @@ class MusicPlayerMain < Gosu::Window
 
     # Track Playing Mechanism in Album
     if @current_album != "favorites"
-      print track
       @playing_track_name = album.tracks[track].name
       @playing_artist = album.artist
-      print("PLAYING #{album.tracks[track].name}")
       @current_track_location = (album.tracks[track].location.chomp)
       @music = Gosu::Song.new(@current_track_location)
       @music.play(@current_track_repeat)
-      puts (album.tracks[track].location)
-
-      
+  
     # Track Playing Mechanism in Favorites Album
     elsif @current_album == "favorites"
       @playing_track_name = album[track].name
       @playing_artist = album[track].artist
       @current_track_location = album[track].location.chomp
-      print("PLAYING #{album[track].name}")
       @music = Gosu::Song.new(@current_track_location)
       @music.play(@current_track_repeat)
     end
@@ -953,5 +1093,7 @@ if options[:gui] #open gui
 elsif options[:cli] #open cli
   main_menu_albums()
 elsif options[:help]  #display help text 
-  puts("USAGE: ruby [filename] --gui\nGUI MODE : --gui/-g\nCLI MODE: --cli,-c")
+  puts("AUTHOR:\nEkrar Uddin Mohammed Efaz\n\nPROGRAM:\nMUSIC PLAYER\n\nUSAGE:\nruby [filename] --gui\nGUI MODE : --gui/-g\nCLI MODE: --cli,-c".red)
+else
+  puts("USAGE\n   ruby [filename] --gui\nGUI MODE:\n   --gui/-g\nCLI MODE:\n   --cli,-c\n".red)
 end
